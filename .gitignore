@@ -1,0 +1,11 @@
+# Data
+data/
+
+# Pycache
+__pycache__/
+
+# Virtual environment
+myenv/
+
+# Folder attributes
+.DS_Store
