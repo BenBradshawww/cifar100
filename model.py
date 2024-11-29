@@ -38,7 +38,7 @@ class AttentionBlock(nn.Module):
 
         self.to_qkv = nn.Linear(dim, inner_dim*3, bias=False)
 
-        self.attention = nn.Softmax()
+        self.attention = nn.Softmax(dim=-1)
 
         self.to_out = nn.Sequential(
             nn.Linear(inner_dim, dim),

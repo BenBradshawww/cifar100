@@ -26,12 +26,12 @@ def arugment_parser():
     parser.add_argument('--split', default=0.8, type=float, help='train & validation split size')
     parser.add_argument('--resume', default=False, type=bool, help='resume training?')
     parser.add_argument('--epochs', default=100, type=int, help='number of epochs')
-    parser.add_argument('--path', default='./model_checkpoints/ViT_checkpoints/', type=str, help='model checkpoint path')
+    parser.add_argument('--dir', default='./model_checkpoints/ViT_checkpoints/', type=str, help='model checkpoint directory')
     parser.add_argument('--seed', default=42, type=int, help='seed')
     parser.add_argument('--use_amp', default=True, type=bool, help='whether to use automatic mixed precision')
     parser.add_argument('--continue_training', default=True, type=bool, help='whether to continue training')
-    parser.add_argument('--scheduler', default='reduce_lr', type=str, help='learning rate scheduler')
-    parser.add_argument('--history_path', default='./history/vit_history', type=str, help='training history path')
+    parser.add_argument('--scheduler', default='cosine', type=str, help='learning rate scheduler')
+    parser.add_argument('--history_path', default='./history/vit_history.txt', type=str, help='training history path')
     return parser
 
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     args = arugment_parser().parse_args()
 
     seed = args.seed
-    checkpoint_path = args.path
+    checkpoint_dir = args.dir
     epochs = args.epochs
     use_amp = args.use_amp
     scheduler = args.scheduler
@@ -101,12 +101,12 @@ if __name__ == "__main__":
     elif scheduler == 'cosine':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, 
-            args.n_epochs
+            args.epochs
         )
     else:
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, 
-            args.n_epochs
+            args.epochs
         )
         logging.info('cosine scheduler used')
 
@@ -127,7 +127,7 @@ if __name__ == "__main__":
         scheduler=scheduler,
         train_loader=train_dataloader,
         val_loader=val_dataloader,
-        checkpoint_path=checkpoint_path,
+        checkpoint_dir=checkpoint_dir,
         history_path=history_path,
         epochs=epochs,
         criterion=criterion,

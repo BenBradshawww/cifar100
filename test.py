@@ -22,7 +22,7 @@ def arugment_parser():
     parser.add_argument('--model', default='vit', type=str, help='model name')
     parser.add_argument('--bs', default=32, type=int, help='batch size')
     parser.add_argument('--split', default=0.8, type=float, help='train & validation split size')
-    parser.add_argument('--path', default='./model_checkpoints/ViT_checkpoints/', type=str, help='model checkpoint path')
+    parser.add_argument('--dir', default='./model_checkpoints/ViT_checkpoints/', type=str, help='model checkpoint directory')
     parser.add_argument('--seed', default=42, type=int, help='seed')
     parser.add_argument('--history_path', default='./history/vit_history', type=str, help='training history path')
     return parser
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     args = arugment_parser().parse_args()
 
     seed = args.seed
-    checkpoint_path = args.path
+    checkpoint_dir = args.dir
     image_size = (32,32)
     patch_size = (8,8)
 
@@ -70,6 +70,6 @@ if __name__ == "__main__":
     test_model(
         model=model,
         test_dataloader=test_dataloader,
-        checkpoint_path=checkpoint_path,
+        checkpoint_dir=checkpoint_dir,
         criterion=criterion,
     )

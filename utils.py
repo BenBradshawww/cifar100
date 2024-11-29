@@ -59,6 +59,18 @@ def write_to_csv(history_path, epoch, train_loss, train_acc, val_loss, val_acc):
             writer.writerow(header)
         writer.writerow(row)
 
+def clean_history(history_path, epoch_threshold):
+
+    with open(file_path, mode="r", newline="") as file:
+        reader = csv.reader(file)
+        header = next(reader)
+        rows = [row for row in reader if int(row[header.index("epochs")]) <= epoch_threshold]
+
+    with open(file_path, mode="w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+        writer.writerows(rows)  
+
 
 def get_last_epoch(history_path):
     if not os.path.isfile(history_path):
@@ -80,15 +92,15 @@ def train_model(
     scheduler,
     train_loader,
     val_loader,
-    checkpoint_path,
+    checkpoint_dir,
     history_path,
     epochs:int,
     criterion,
     use_amp:bool=True,
     seed:int=42,
-    patience: int = 15,
-    threshold: float = 1e-4,
-    continue_training:bool = True,
+    patience:int=15,
+    threshold:float=1e-4,
+    continue_training:bool=True,
 ):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
@@ -96,18 +108,37 @@ def train_model(
 
     best_loss = float("inf")
     start_time = time.time()
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device_str = "cuda" if torch.cuda.is_available() else "cpu"
+    device = torch.device(device_str)
     model.to(device)
     offset = 0
     early_stop_counter = 0
 
-    if continue_training and os.path.isfile(checkpoint_path):
-        checkpoint = torch.load(checkpoint_path, map_location=torch.device(device))
+    checkpoints = [x for x in os.listdir(checkpoint_dir) if x.endswith('.pth')]
+    checkpoints.sort()
+
+    # Load the previous checkpoint if it exists
+    if continue_training and checkpoints:
+        final_checkpoint = checkpoints[-1]
+
+        logging.info(f'Checkpoint found at {final_checkpoint}')
+        
+        checkpoint = torch.load(
+            final_checkpoint,
+            map_location=torch.device(device),
+        )
+        
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        offset = get_last_epoch(history_path=history_path)
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        offset = checkpoint['epoch']
+        
+        clean_history(
+            history_path=history_path,
+            epoch_threshold=offset,
+        )
 
-    scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+    scaler = torch.amp.GradScaler(device=device, enabled=use_amp)
 
     for epoch in range(offset, epochs):
 
@@ -126,7 +157,7 @@ def train_model(
 
             optimizer.zero_grad()
 
-            with torch.cuda.amp.autocast(enabled=use_amp):
+            with torch.amp.autocast(device_type=device_str, enabled=use_amp):
                 outputs = model(images)
                 loss_train = criterion(outputs, labels)
 
@@ -176,11 +207,15 @@ def train_model(
         if new_lr != current_lr:
             print(f"Epoch {epoch}: Learning rate reduced from {current_lr} to {new_lr}")
 
-           
-        if val_loss < best_loss - threshold:
-            best_loss = val_loss
-            best_model_state = model.state_dict()
-            torch.save(best_model_state, checkpoint_path)
+        # Saving checkpoints
+        if val_loss < (best_loss - threshold):
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': scheduler.state_dict(),
+            }, f'{checkpoint_dir}/checkpoint_epoch_{epoch}.pth')
+
             early_stop_counter = 0
         else:
             early_stop_counter += 1
@@ -206,7 +241,7 @@ def train_model(
 def test_model(
     model, 
     test_loader,
-    checkpoint_path,
+    checkpoint_dir,
     criterion,
     ):
 
@@ -214,7 +249,11 @@ def test_model(
     model = model.to(device)
 
     model = torch.nn.DataParallel(model)
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+
+    checkpoints = [x for x in os.listdir(checkpoint_dir) if x.endswith('.pth')]
+    checkpoints.sort()
+
+    model.load_state_dict(torch.load(checkpoints[-1], map_location=device))
     model.eval()
 
     counter = 0
