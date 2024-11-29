@@ -120,8 +120,6 @@ def train_model(
     # Load the previous checkpoint if it exists
     if continue_training and checkpoints:
         final_checkpoint = checkpoints[-1]
-
-        logging.info(f'Checkpoint found at {final_checkpoint}')
         
         checkpoint = torch.load(
             final_checkpoint,
@@ -132,6 +130,8 @@ def train_model(
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         offset = checkpoint['epoch']
+
+        logging.info(f'Checkpoint restored from {final_checkpoint}')
         
         clean_history(
             history_path=history_path,
