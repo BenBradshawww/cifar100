@@ -84,7 +84,6 @@ class TransformerBlock(nn.Module):
         )
     
     def forward(self, x):
-        print(x.shape)
         x = self.mha(self.norm1(x)) + x
         x = self.mlp(self.norm2(x)) + x
         return x

@@ -51,7 +51,7 @@ if __name__ == "__main__":
         model = ViT(
             image_size=image_size,
             patch_size=patch_size,
-            dim=32,
+            dim=128,
             depth=8, 
             heads=4,
             num_classes=100,
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         model = ViT(
             image_size=image_size,
             patch_size=patch_size,
-            dim=32,
+            dim=128,
             depth=8, 
             heads=4,
             num_classes=100,
