@@ -74,7 +74,7 @@ def clean_history(history_path, epoch_threshold):
     with open(history_path, mode="r", newline="") as file:
         reader = csv.reader(file)
         header = next(reader)
-        rows = [row for row in reader if int(row[header.index("epochs")]) <= epoch_threshold]
+        rows = [row for row in reader if int(row[header.index("epoch")]) <= epoch_threshold]
 
     with open(history_path, mode="w", newline="") as file:
         writer = csv.writer(file)
