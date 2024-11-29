@@ -111,7 +111,11 @@ if __name__ == "__main__":
         logging.info('cosine scheduler used')
 
 
-    train_dataloader, val_dataloader, test_dataloader = create_dataloaders(batch_size=args.bs, split=args.split)
+    train_dataloader, val_dataloader, test_dataloader = create_dataloaders(
+        batch_size=args.bs,
+        split=args.split,
+        seed=seed,
+    )
 
     criterion = nn.CrossEntropyLoss()
 

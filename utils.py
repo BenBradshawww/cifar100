@@ -201,3 +201,44 @@ def train_model(
 
     print("Optimization Finished!")
     print("Total time elapsed: {:.4f}s".format(time.time() - start_time))
+
+
+def test_model(
+    model, 
+    test_loader,
+    checkpoint_path,
+    criterion,
+    ):
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = model.to(device)
+
+    model = torch.nn.DataParallel(model)
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    model.eval()
+
+    counter = 0
+    running_loss = 0
+    total_samples = 0
+    running_corrects = 0
+
+    with torch.no_grad():
+        for batch in test_loader:
+            images, labels = batch[0], batch[1]
+            images, labels = images.to(device), labels.to(device)
+            counter += 1
+
+            outputs = model(images)
+
+            preds = outputs.argmax(1)
+            label_1_dim = labels.argmax(1)
+
+            running_corrects += torch.sum(preds == label_1_dim).item()
+            total_samples += labels.size(0)
+
+            running_loss += criterion(outputs, labels)
+
+    test_loss = running_loss / counter
+    test_acc = running_corrects / total_samples
+
+    print("Test set results:", "loss= {:.4f}".format(test_loss), "accuracy= {:.4f}".format(test_acc))
