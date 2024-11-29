@@ -8,6 +8,12 @@ import torch
 import time
 import csv
 import os
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 
 def create_dataloaders(batch_size: int = 32, split: float = 0.8, seed:int = 42):
@@ -51,6 +57,8 @@ def write_to_csv(history_path, epoch, train_loss, train_acc, val_loss, val_acc):
     
     if epoch == 0 and os.path.isfile(history_path):
         os.remove(history_path)
+    elif not os.path.isfile(history_path):
+       os.makedirs(os.path.dirname(history_path), exist_ok=True)
     
     write_header = not os.path.isfile(history_path)
     with open(history_path, mode="a", newline="") as file:
@@ -61,12 +69,14 @@ def write_to_csv(history_path, epoch, train_loss, train_acc, val_loss, val_acc):
 
 def clean_history(history_path, epoch_threshold):
 
-    with open(file_path, mode="r", newline="") as file:
+    os.makedirs(os.path.dirname(history_path), exist_ok=True)
+
+    with open(history_path, mode="r", newline="") as file:
         reader = csv.reader(file)
         header = next(reader)
         rows = [row for row in reader if int(row[header.index("epochs")]) <= epoch_threshold]
 
-    with open(file_path, mode="w", newline="") as file:
+    with open(history_path, mode="w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(header)
         writer.writerows(rows)  
@@ -84,7 +94,6 @@ def get_last_epoch(history_path):
             pass 
     
     return int(last_row[0]) if last_row else 0
-
 
 def train_model(
     model,
@@ -114,15 +123,19 @@ def train_model(
     offset = 0
     early_stop_counter = 0
 
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
+
     checkpoints = [x for x in os.listdir(checkpoint_dir) if x.endswith('.pth')]
     checkpoints.sort()
 
     # Load the previous checkpoint if it exists
     if continue_training and checkpoints:
         final_checkpoint = checkpoints[-1]
+        final_checkpoint_path = os.path.join(checkpoint_dir, final_checkpoint)
         
         checkpoint = torch.load(
-            final_checkpoint,
+            final_checkpoint_path,
             map_location=torch.device(device),
         )
         
@@ -131,7 +144,7 @@ def train_model(
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         offset = checkpoint['epoch']
 
-        logging.info(f'Checkpoint restored from {final_checkpoint}')
+        logging.info(f'Checkpoint restored from {final_checkpoint_path}')
         
         clean_history(
             history_path=history_path,
@@ -249,7 +262,7 @@ def test_model(
     model = model.to(device)
 
     model = torch.nn.DataParallel(model)
-
+    
     checkpoints = [x for x in os.listdir(checkpoint_dir) if x.endswith('.pth')]
     checkpoints.sort()
 
