@@ -9,3 +9,6 @@ myenv/
 
 # Folder attributes
 .DS_Store
+
+# Backups
+/backups/

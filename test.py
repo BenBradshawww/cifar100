@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     test_model(
         model=model,
-        test_dataloader=test_dataloader,
+        test_loader=test_dataloader,
         checkpoint_dir=checkpoint_dir,
         criterion=criterion,
     )

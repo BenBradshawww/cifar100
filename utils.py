@@ -2,7 +2,10 @@ from torchvision import datasets
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torch.utils.data import random_split
+from torch.utils.data.sampler import SubsetRandomSampler
 from tqdm import tqdm
+
+import numpy as np
 
 import torch
 import time
@@ -38,15 +41,19 @@ def create_dataloaders(batch_size: int = 32, split: float = 0.8, seed:int = 42):
     val_dataset = datasets.CIFAR100(root='./data', train=True, download=True, transform=test_and_val_transform)
     test_dataset = datasets.CIFAR100(root='./data', train=False, download=True, transform=test_and_val_transform)
 
-    train_size = int(split * len(train_dataset))
-    val_size = len(train_dataset) - train_size
+    num_train = len(train_dataset)
+    train_size = int(split * num_train)
 
-    train_dataset, _ = random_split(train_dataset, [train_size, val_size])
-    _, val_dataset = random_split(val_dataset, [train_size, val_size])
+    indices = list(range(num_train))
+    np.random.shuffle(indices)
+    train_idx, valid_idx = indices[:train_size], indices[train_size:]
 
-    train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
-    val_loader = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
-    test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
+    train_sampler = SubsetRandomSampler(train_idx)
+    valid_sampler = SubsetRandomSampler(valid_idx)
+
+    train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=False, sampler=train_sampler, num_workers=4)
+    val_loader = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=False, sampler=valid_sampler, num_workers=4)
+    test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
     return train_loader, val_loader, test_loader
 
@@ -158,7 +165,6 @@ def train_model(
         epoch_start_time = time.time()
         model.train()
 
-        counter = 0
         running_loss = 0
         total_samples = 0
         running_corrects = 0
@@ -166,7 +172,7 @@ def train_model(
         for batch in tqdm(train_loader):
             images, labels = batch[0], batch[1]
             images, labels = images.to(device), labels.to(device)
-            counter += 1
+            batch_sample_size = labels.size(0)
 
             optimizer.zero_grad()
 
@@ -174,18 +180,19 @@ def train_model(
                 outputs = model(images)
                 loss_train = criterion(outputs, labels)
 
-            running_loss += loss_train.item()
+            running_loss += loss_train.item() * batch_sample_size
 
             preds = outputs.argmax(1)
 
             running_corrects += torch.sum(preds == labels).item()
-            total_samples += labels.size(0)
+
+            total_samples += batch_sample_size
             
             scaler.scale(loss_train).backward()
             scaler.step(optimizer)
             scaler.update()  
 
-        train_loss = running_loss / counter
+        train_loss = running_loss / total_samples
         train_acc = running_corrects / total_samples
 
         # Validation
@@ -199,18 +206,18 @@ def train_model(
             for batch in val_loader:
                 images, labels = batch[0], batch[1]
                 images, labels = images.to(device), labels.to(device)
-                counter += 1
+                batch_sample_size = labels.size(0)
 
                 outputs = model(images)
 
-                running_loss += criterion(outputs, labels).item()
+                running_loss += criterion(outputs, labels).item() * batch_sample_size
 
                 preds = outputs.argmax(1)
 
                 running_corrects += torch.sum(preds == labels).item()
-                total_samples += labels.size(0)
+                total_samples += batch_sample_size
 
-        val_loss = running_loss / counter
+        val_loss = running_loss / total_samples
         val_acc = running_corrects / total_samples
 
         # Changing step sizes
@@ -260,13 +267,22 @@ def test_model(
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = model.to(device)
-
-    model = torch.nn.DataParallel(model)
     
     checkpoints = [x for x in os.listdir(checkpoint_dir) if x.endswith('.pth')]
     checkpoints.sort()
 
-    model.load_state_dict(torch.load(checkpoints[-1], map_location=device))
+    if checkpoints == []:
+        raise OSError(f'There is no pth file in directory {checkpoints[-1]}')
+
+    final_checkpoint_path = os.path.join(checkpoint_dir, checkpoints[-1])
+
+    checkpoint = torch.load(
+            final_checkpoint_path,
+            map_location=torch.device(device),
+    )
+        
+    model.load_state_dict(checkpoint['model_state_dict'])
+    model = torch.nn.DataParallel(model)
     model.eval()
 
     counter = 0
@@ -282,13 +298,12 @@ def test_model(
 
             outputs = model(images)
 
+            running_loss += criterion(outputs, labels).item()
+
             preds = outputs.argmax(1)
-            label_1_dim = labels.argmax(1)
 
-            running_corrects += torch.sum(preds == label_1_dim).item()
+            running_corrects += torch.sum(preds == labels).item()
             total_samples += labels.size(0)
-
-            running_loss += criterion(outputs, labels)
 
     test_loss = running_loss / counter
     test_acc = running_corrects / total_samples
