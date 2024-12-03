@@ -283,6 +283,7 @@ def test_model(
     checkpoint = torch.load(
             final_checkpoint_path,
             map_location=torch.device(device),
+            weights_only=True,
     )
 
     logging.info(f'Checkpoint restored from {final_checkpoint_path}')

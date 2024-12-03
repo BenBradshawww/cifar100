@@ -3,3 +3,4 @@ torchvision
 einops
 tqdm
 numpy
+torch-lr-finder
