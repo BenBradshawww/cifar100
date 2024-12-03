@@ -234,7 +234,9 @@ def train_model(
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'scheduler_state_dict': scheduler.state_dict(),
-            }, f'{checkpoint_dir}/checkpoint_epoch_{epoch}.pth')
+            }, f'{checkpoint_dir}/checkpoint_epoch_{epoch:04d}.pth')
+
+            best_loss = val_loss
 
             early_stop_counter = 0
         else:
@@ -280,6 +282,8 @@ def test_model(
             final_checkpoint_path,
             map_location=torch.device(device),
     )
+
+    logging.info(f'Checkpoint restored from {final_checkpoint_path}')
         
     model.load_state_dict(checkpoint['model_state_dict'])
     model = torch.nn.DataParallel(model)
@@ -309,3 +313,12 @@ def test_model(
     test_acc = running_corrects / total_samples
 
     print("Test set results:", "loss= {:.4f}".format(test_loss), "accuracy= {:.4f}".format(test_acc))
+
+
+def number_params(model):
+
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    logging.info(f"Total parameters: {total_params}")
+    logging.info(f"Trainable parameters: {trainable_params}")
