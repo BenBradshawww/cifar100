@@ -224,7 +224,7 @@ def train_model(
 
         # Changing step sizes
         current_lr = optimizer.param_groups[0]["lr"]
-        scheduler.step(val_loss)
+        scheduler.step()
         new_lr = optimizer.param_groups[0]["lr"]
         if new_lr != current_lr:
             print(f"Epoch {epoch}: Learning rate reduced from {current_lr} to {new_lr}")
