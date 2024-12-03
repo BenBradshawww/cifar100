@@ -22,7 +22,7 @@ logging.basicConfig(
 def create_dataloaders(batch_size: int = 32, split: float = 0.8, seed:int = 42):
 
     torch.manual_seed(seed)
-    np.seed(seed)
+    np.random.seed(42)
 
     train_transform = transforms.Compose([
         transforms.RandomHorizontalFlip(p=0.5),
