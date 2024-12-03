@@ -22,6 +22,7 @@ logging.basicConfig(
 def create_dataloaders(batch_size: int = 32, split: float = 0.8, seed:int = 42):
 
     torch.manual_seed(seed)
+    np.seed(seed)
 
     train_transform = transforms.Compose([
         transforms.RandomHorizontalFlip(p=0.5),
@@ -45,6 +46,7 @@ def create_dataloaders(batch_size: int = 32, split: float = 0.8, seed:int = 42):
     train_size = int(split * num_train)
 
     indices = list(range(num_train))
+    
     np.random.shuffle(indices)
     train_idx, valid_idx = indices[:train_size], indices[train_size:]
 
