@@ -64,7 +64,7 @@ class AttentionBlock(nn.Module):
 
 class TransformerBlock(nn.Module):
 
-    def __init__(self, dim, heads, head_dim, dropout_rate=0.):
+    def __init__(self, dim, heads, head_dim, mlp_dim, dropout_rate=0.):
         super().__init__()
         self.norm1 = nn.LayerNorm(dim)
         self.mha = AttentionBlock(
@@ -73,8 +73,6 @@ class TransformerBlock(nn.Module):
             head_dim=head_dim,
             dropout_rate=dropout_rate,
         )
-
-        mlp_dim = head_dim * 2
 
         self.norm2 = nn.LayerNorm(dim)
         self.mlp = MLPBlock(
@@ -91,7 +89,7 @@ class TransformerBlock(nn.Module):
 
 
 class ViT(nn.Module):
-    def __init__(self, image_size, patch_size, dim, depth, heads, num_classes, dropout_rate=0., channels=3, pool='mean'):
+    def __init__(self, image_size, patch_size, dim, mlp_dim, depth, heads, num_classes, dropout_rate=0., channels=3, pool='mean'):
         super().__init__()
 
         image_height, image_width = pair(image_size)
@@ -124,6 +122,7 @@ class ViT(nn.Module):
                 dim=dim,
                 heads=heads,
                 head_dim=patch_dim,
+                mlp_dim=mlp_dim,
                 dropout_rate=dropout_rate,
                 ))
 

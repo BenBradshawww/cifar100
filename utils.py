@@ -12,6 +12,7 @@ import time
 import csv
 import os
 import logging
+import json
 
 logging.basicConfig(
     level=logging.INFO,
@@ -325,3 +326,14 @@ def number_params(model):
 
     logging.info(f"Total parameters: {total_params}")
     logging.info(f"Trainable parameters: {trainable_params}")
+
+
+def get_model_configs(model:str):
+
+    with open("./models/model_configs.json", "r") as f:
+        model_configs = json.load(f)
+
+    try:
+        return model_configs[model]
+    except:
+        raise KeyError(f'{model} does not exist in the model configs json object')  

@@ -3,13 +3,12 @@ import logging
 import torch
 from torch import nn
 
-from model import (
-    ViT,
-)
+from models.vit import ViT
 
 from utils import (
     create_dataloaders,
     train_model,
+    get_model_configs,
 )
 
 logging.basicConfig(
@@ -20,7 +19,7 @@ logging.basicConfig(
 def arugment_parser():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR100 Training')
     parser.add_argument('--lr', default=1e-4, type=float, help='learning rate')
-    parser.add_argument('--model', default='vit', type=str, help='model name')
+    parser.add_argument('--model', default='vit_tiny', type=str, help='model name')
     parser.add_argument('--optim', default='adam', type=str, help='optimizer name')
     parser.add_argument('--bs', default=32, type=int, help='batch size')
     parser.add_argument('--split', default=0.8, type=float, help='train & validation split size')
@@ -45,27 +44,22 @@ if __name__ == "__main__":
     scheduler = args.scheduler
     history_path = args.history_path
     image_size = (32,32)
-    patch_size = (8,8)
 
-    if args.model == 'vit':
+    model_configs = get_model_configs(args.model)
+
+    if args.model in ['vit_tiny', 'vit_small', 'vit_base']:
         model = ViT(
             image_size=image_size,
-            patch_size=patch_size,
-            dim=128,
-            depth=8, 
-            heads=4,
             num_classes=100,
             dropout_rate=0.2,
+            **model_configs,
         )
     else:
         model = ViT(
             image_size=image_size,
-            patch_size=patch_size,
-            dim=128,
-            depth=8, 
-            heads=4,
             num_classes=100,
             dropout_rate=0.2,
+            **model_configs,
         )
 
 
