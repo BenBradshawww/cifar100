@@ -30,6 +30,7 @@ def arugment_parser():
     parser.add_argument('--use_amp', default=True, type=bool, help='whether to use automatic mixed precision')
     parser.add_argument('--continue_training', default=True, type=bool, help='whether to continue training')
     parser.add_argument('--scheduler', default='cosine', type=str, help='learning rate scheduler')
+    parser.add_argument('--drop', default=0.2, type=float, help='drop out rate')
     parser.add_argument('--history_path', default='./history/vit_history.txt', type=str, help='training history path')
     return parser
 
@@ -43,6 +44,7 @@ if __name__ == "__main__":
     use_amp = args.use_amp
     scheduler = args.scheduler
     history_path = args.history_path
+    dropout_rate = args.dropout_rate
     image_size = (32,32)
 
     model_configs = get_model_configs(args.model)
@@ -51,14 +53,14 @@ if __name__ == "__main__":
         model = ViT(
             image_size=image_size,
             num_classes=100,
-            dropout_rate=0.2,
+            dropout_rate=dropout_rate,
             **model_configs,
         )
     else:
         model = ViT(
             image_size=image_size,
             num_classes=100,
-            dropout_rate=0.2,
+            dropout_rate=dropout_rate,
             **model_configs,
         )
 
@@ -70,12 +72,12 @@ if __name__ == "__main__":
     if args.optim == 'adam':
         optimizer = torch.optim.Adam(
             params=model.parameters(),
-            lr=1e-4
+            lr=args.lr
         )
     elif args.optim == 'sgd':
         optimizer = torch.optim.SGD(
             params=model.parameters(),
-            lr=1e-4
+            lr=args.lr
         )
     elif args.optim == 'adamw':
 
@@ -97,12 +99,12 @@ if __name__ == "__main__":
         
         optimizer = torch.optim.AdamW(
             params=param_groups,
-            lr=1e-4
+            lr=args.lr
         )
     else:
         optimizer = torch.optim.Adam(
             params=model.parameters(),
-            lr=1e-4
+            lr=args.lr
         )
         logging.info('adam optimizer used')
 
@@ -112,7 +114,9 @@ if __name__ == "__main__":
             optimizer,
             'min',
             factor=0.1,
-            min_lr=1e-6
+            min_lr=1e-6,
+            patience=10,
+            verbose=True,
         )
     elif scheduler == 'cosine':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(

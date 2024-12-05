@@ -89,7 +89,7 @@ class TransformerBlock(nn.Module):
 
 
 class ViT(nn.Module):
-    def __init__(self, image_size, patch_size, dim, mlp_dim, depth, heads, num_classes, dropout_rate=0.,channels=3, pool='mean'):
+    def __init__(self, image_size, patch_size, dim, mlp_dim, depth, heads, num_classes=100, dropout_rate=0.,channels=3, pool='mean'):
         super().__init__()
 
         image_height, image_width = pair(image_size)

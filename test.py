@@ -3,13 +3,12 @@ import logging
 import torch
 from torch import nn
 
-from model import (
-    ViT,
-)
+from models.vit import ViT
 
 from utils import (
     create_dataloaders,
     test_model,
+    get_model_configs,
 )
 
 logging.basicConfig(
@@ -19,7 +18,7 @@ logging.basicConfig(
 
 def arugment_parser():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR100 Testing')
-    parser.add_argument('--model', default='vit', type=str, help='model name')
+    parser.add_argument('--model', default='vit_tiny', type=str, help='model name')
     parser.add_argument('--bs', default=32, type=int, help='batch size')
     parser.add_argument('--split', default=0.8, type=float, help='train & validation split size')
     parser.add_argument('--dir', default='./model_checkpoints/ViT_checkpoints/', type=str, help='model checkpoint directory')
@@ -34,27 +33,20 @@ if __name__ == "__main__":
     seed = args.seed
     checkpoint_dir = args.dir
     image_size = (32,32)
-    patch_size = (8,8)
 
-    if args.model == 'vit':
+    model_configs = get_model_configs(args.model)
+
+    if args.model == 'vit_tiny':
         model = ViT(
             image_size=image_size,
-            patch_size=patch_size,
-            dim=128,
-            depth=8, 
-            heads=4,
             num_classes=100,
-            dropout_rate=0.2,
+            **model_configs,
         )
     else:
         model = ViT(
             image_size=image_size,
-            patch_size=patch_size,
-            dim=128,
-            depth=8, 
-            heads=4,
             num_classes=100,
-            dropout_rate=0.2,
+            **model_configs,
         )
 
     _, _, test_dataloader = create_dataloaders(
