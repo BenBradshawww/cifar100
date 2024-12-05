@@ -77,6 +77,28 @@ if __name__ == "__main__":
             params=model.parameters(),
             lr=1e-4
         )
+    elif args.optim == 'adamw':
+
+        decay_params = []
+        no_decay_params = []
+
+        for name, param in model.named_parameters():
+            if not param.requires_grad: 
+                continue
+            if "bias" in name or "LayerNorm" in name:
+                no_decay_params.append(param)
+            else:
+                decay_params.append(param)
+        
+        param_groups = [
+            {"params": decay_params, "weight_decay": 1e-4},
+            {"params": no_decay_params, "weight_decay": 0.0},
+        ]
+        
+        optimizer = torch.optim.AdamW(
+            params=param_groups,
+            lr=1e-4
+        )
     else:
         optimizer = torch.optim.Adam(
             params=model.parameters(),
