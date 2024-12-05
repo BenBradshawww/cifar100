@@ -20,7 +20,7 @@ def arugment_parser():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR100 Training')
     parser.add_argument('--lr', default=1e-4, type=float, help='learning rate')
     parser.add_argument('--model', default='vit_tiny', type=str, help='model name')
-    parser.add_argument('--optim', default='adam', type=str, help='optimizer name')
+    parser.add_argument('--optim', default='adamw', type=str, help='optimizer name')
     parser.add_argument('--bs', default=32, type=int, help='batch size')
     parser.add_argument('--split', default=0.8, type=float, help='train & validation split size')
     parser.add_argument('--resume', default=False, type=bool, help='resume training?')
