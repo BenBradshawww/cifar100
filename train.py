@@ -19,7 +19,7 @@ logging.basicConfig(
 def arugment_parser():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR100 Training')
     parser.add_argument('--lr', default=1e-4, type=float, help='learning rate')
-    parser.add_argument('--model', default='vit_tiny', type=str, help='model name')
+    parser.add_argument('--model', default='vit_custom', type=str, help='model name')
     parser.add_argument('--optim', default='adamw', type=str, help='optimizer name')
     parser.add_argument('--bs', default=32, type=int, help='batch size')
     parser.add_argument('--split', default=0.8, type=float, help='train & validation split size')
@@ -44,12 +44,12 @@ if __name__ == "__main__":
     use_amp = args.use_amp
     scheduler = args.scheduler
     history_path = args.history_path
-    dropout_rate = args.dropout_rate
+    dropout_rate = args.drop
     image_size = (32,32)
 
     model_configs = get_model_configs(args.model)
 
-    if args.model in ['vit_tiny', 'vit_small', 'vit_base']:
+    if args.model in ['vit_custom', 'vit_tiny', 'vit_small', 'vit_base']:
         model = ViT(
             image_size=image_size,
             num_classes=100,

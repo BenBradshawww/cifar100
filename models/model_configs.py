@@ -1,7 +1,14 @@
-
+import os
 import json
 
 model_configs = {
+    "vit_custom": {
+        "patch_size": 8,
+        "dim": 128,
+        "depth": 8,
+        "heads": 4,
+        "mlp_dim": 128,
+    },
     "vit_tiny": {
         "patch_size": 4,
         "dim": 192,
@@ -25,5 +32,6 @@ model_configs = {
     },
 }
 
-with open("model_configs.json", "w") as f:
+file = "model_configs.json"
+with open(file, "w") as f:
     json.dump(model_configs, f, indent=4)

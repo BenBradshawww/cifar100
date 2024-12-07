@@ -1,4 +1,11 @@
 {
+    "vit_custom": {
+        "patch_size": 8,
+        "dim": 128,
+        "depth": 8,
+        "heads": 4,
+        "mlp_dim": 128
+    },
     "vit_tiny": {
         "patch_size": 4,
         "dim": 192,
